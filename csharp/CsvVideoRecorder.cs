@@ -85,14 +85,31 @@ public static class CsvVideoRecorder
         var search = page.Locator("textarea[name='q']").First;
         await search.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 20000 });
         var query = "Magento developer in " + row["City"].Trim();
-        await search.ClickAsync();
-        await search.FillAsync(query);
-        await search.PressAsync("Enter");
+
+        // Move the real Playwright mouse gradually, matching the Python recorder.
+        var searchBox = await search.BoundingBoxAsync()
+            ?? throw new InvalidOperationException("Search field has no bounding box.");
+        var searchPoint = (
+            X: searchBox.X + searchBox.Width / 2,
+            Y: searchBox.Y + searchBox.Height / 2
+        );
+        var mousePosition = await SmoothMoveAsync(page, (X: 0d, Y: 0d), searchPoint);
+        await page.Mouse.ClickAsync(searchPoint.X, searchPoint.Y);
+        await page.Keyboard.TypeAsync(query, new KeyboardTypeOptions { Delay = 105 });
+        await page.Keyboard.PressAsync("Enter");
 
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
         await firstResult.ScrollIntoViewIfNeededAsync();
-        await firstResult.ClickAsync(new LocatorClickOptions { Timeout = 15000 });
+
+        var resultBox = await firstResult.BoundingBoxAsync()
+            ?? throw new InvalidOperationException("First search result has no bounding box.");
+        var resultPoint = (
+            X: resultBox.X + resultBox.Width / 2,
+            Y: resultBox.Y + resultBox.Height / 2
+        );
+        mousePosition = await SmoothMoveAsync(page, mousePosition, resultPoint, durationMs: 900, steps: 36);
+        await page.Mouse.ClickAsync(resultPoint.X, resultPoint.Y);
         try
         {
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 12000 });
@@ -111,6 +128,28 @@ public static class CsvVideoRecorder
             destination = Path.Combine(VideoDirectory, $"{safeName}_{suffix++}.webm");
         File.Move(recordedPath, destination);
         return destination;
+    }
+
+    private static async Task<(double X, double Y)> SmoothMoveAsync(
+        IPage page,
+        (double X, double Y) start,
+        (double X, double Y) end,
+        int durationMs = 800,
+        int steps = 30)
+    {
+        for (var index = 1; index <= steps; index++)
+        {
+            var t = (double)index / steps;
+            // Smoothstep easing: gradual acceleration and deceleration.
+            var eased = t * t * (3 - 2 * t);
+            var x = start.X + (end.X - start.X) * eased;
+            var y = start.Y + (end.Y - start.Y) * eased;
+
+            await page.Mouse.MoveAsync(x, y);
+            await Task.Delay(Math.Max(1, durationMs / steps));
+        }
+
+        return end;
     }
 
     private static async Task PreviewAsync(string videoUrl, double seconds)
