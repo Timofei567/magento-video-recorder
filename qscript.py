@@ -571,7 +571,8 @@ def CaptureVideo_Magento(
             page.wait_for_timeout(1800)
 
 
-            page.wait_for_timeout(700)
+            # Keep the destination page visible briefly before ending the recording.
+            page.wait_for_timeout(2700)
 
 
             video = page.video
