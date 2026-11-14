@@ -267,7 +267,7 @@ public static class CsvVideoRecorder
           const install = () => {
             if (!document.documentElement || document.getElementById('__capture_cursor')) return;
             const style = document.createElement('style');
-            style.textContent = '#__capture_cursor{position:fixed;left:0;top:0;width:32px;height:32px;z-index:2147483647;pointer-events:none;transform:translate(-2px,-2px)} #__capture_highlight{position:fixed;width:64px;height:64px;border-radius:50%;background:rgba(255,220,0,.38);transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none}';
+            style.textContent = '#__capture_cursor{position:fixed;left:0;top:0;width:32px;height:32px;z-index:2147483647;pointer-events:none;transform:translate(-2px,-2px);filter:drop-shadow(1px 1px 1px rgba(0,0,0,.25))} #__capture_highlight{position:fixed;width:64px;height:64px;border-radius:50%;background:rgba(255,220,0,.38);transform:translate(-50%,-50%);z-index:2147483645;pointer-events:none} .__capture_ripple{position:fixed;width:12px;height:12px;border-radius:50%;border:3px solid rgba(20,120,255,.85);background:rgba(80,170,255,.18);z-index:2147483646;pointer-events:none;transform:translate(-50%,-50%) scale(.2);animation:__capture_ripple_anim .65s ease-out forwards} @keyframes __capture_ripple_anim{to{transform:translate(-50%,-50%) scale(3.2);opacity:0}}';
             document.documentElement.appendChild(style);
             const cursor = document.createElementNS('http://www.w3.org/2000/svg','svg');
             cursor.id='__capture_cursor'; cursor.setAttribute('viewBox','0 0 32 32');
@@ -275,6 +275,14 @@ public static class CsvVideoRecorder
             const highlight=document.createElement('div'); highlight.id='__capture_highlight';
             document.documentElement.append(cursor,highlight);
             document.addEventListener('mousemove',e=>{cursor.style.left=e.clientX+'px';cursor.style.top=e.clientY+'px';highlight.style.left=e.clientX+'px';highlight.style.top=e.clientY+'px';},true);
+            document.addEventListener('click',e=>{
+              const ripple=document.createElement('span');
+              ripple.className='__capture_ripple';
+              ripple.style.left=e.clientX+'px';
+              ripple.style.top=e.clientY+'px';
+              document.documentElement.appendChild(ripple);
+              ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});
+            },true);
           };
           if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',install,{once:true}); else install();
         })();
