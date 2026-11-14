@@ -145,7 +145,7 @@ public static class CsvVideoRecorder
             var x = start.X + (end.X - start.X) * eased;
             var y = start.Y + (end.Y - start.Y) * eased;
 
-            await page.Mouse.MoveAsync(x, y);
+            await page.Mouse.MoveAsync((float)x, (float)y);
             await Task.Delay(Math.Max(1, durationMs / steps));
         }
 
