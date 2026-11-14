@@ -558,21 +558,19 @@ def CaptureVideo_Magento(
             )
 
 
+            # Wait for the clicked result to finish navigating, then keep
+            # the destination page visible for about 2 seconds.
             try:
-
                 page.wait_for_load_state(
                     "domcontentloaded",
-                    timeout=12000,
+                    timeout=NAVIGATION_TIMEOUT_MS,
                 )
-
             except PlaywrightTimeoutError:
+                # Some sites keep loading in the background; the destination
+                # can still be usable, so preserve the recording pause.
                 pass
 
-            page.wait_for_timeout(1800)
-
-
-            # Keep the destination page visible briefly before ending the recording.
-            page.wait_for_timeout(2700)
+            page.wait_for_timeout(2000)
 
 
             video = page.video
