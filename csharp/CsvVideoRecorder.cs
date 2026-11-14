@@ -105,12 +105,6 @@ public static class CsvVideoRecorder
                 mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint, durationMs: 550);
                 await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
             }
-            else
-            {
-            }
-        }
-        else
-        {
         }
 
         await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000 });
