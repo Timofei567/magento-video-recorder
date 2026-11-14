@@ -30,7 +30,6 @@ public static class CsvVideoRecorder
             throw new InvalidOperationException("CSV is missing columns: " + string.Join(", ", missing));
 
         var client = new VideoClient();
-        var index = 1;
         foreach (var row in rows)
         {
             var company = row["Company Name"].Trim();
@@ -55,7 +54,6 @@ public static class CsvVideoRecorder
             {
                 Console.Error.WriteLine($"[RECORD ERROR] {company}: {ex.Message}");
             }
-            index++;
         }
     }
 
