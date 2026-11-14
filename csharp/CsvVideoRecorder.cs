@@ -34,18 +34,15 @@ public static class CsvVideoRecorder
         foreach (var row in rows)
         {
             var company = row["Company Name"].Trim();
-            Console.WriteLine($"[INFO] Row {index}: {company}");
             try
             {
                 var videoPath = await RecordOneAsync(row, company);
-                Console.WriteLine($"[OK] Video saved: {videoPath}");
 
                 if (!string.IsNullOrWhiteSpace(serverUrl))
                 {
                     try
                     {
                         var videoUrl = await client.UploadVideoAsync(serverUrl, videoPath, company);
-                        Console.WriteLine($"[UPLOAD] {videoUrl}");
                         await PreviewAsync(videoUrl, viewSeconds);
                     }
                     catch (Exception ex)
@@ -60,7 +57,6 @@ public static class CsvVideoRecorder
             }
             index++;
         }
-        Console.WriteLine("[DONE] Batch finished.");
     }
 
     private static async Task<string> RecordOneAsync(Dictionary<string, string> row, string company)
@@ -108,18 +104,15 @@ public static class CsvVideoRecorder
                     X: buttonBox.X + buttonBox.Width / 2 + 40,
                     Y: buttonBox.Y + buttonBox.Height / 2
                 );
-                Console.WriteLine("[MOUSE] Moving to the visual search-button coordinates.");
                 mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint, durationMs: 550);
                 await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
             }
             else
             {
-                Console.WriteLine("[WARN] Search button has no bounding box; pressing Enter.");
             }
         }
         else
         {
-            Console.WriteLine("[WARN] Search button element was not found; pressing Enter.");
         }
 
         await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000 });
@@ -193,9 +186,6 @@ public static class CsvVideoRecorder
         await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = false });
         var page = await browser.NewPageAsync();
         await page.GotoAsync(videoUrl, new PageGotoOptions { WaitUntil = WaitUntilState.DOMContentLoaded, Timeout = 45000 });
-        Console.WriteLine(seconds > 0
-            ? $"[PREVIEW] Browser will close in {seconds} seconds."
-            : "[PREVIEW] Press Enter in this console to close the preview browser.");
         if (seconds > 0) await Task.Delay(TimeSpan.FromSeconds(seconds));
         else Console.ReadLine();
     }
