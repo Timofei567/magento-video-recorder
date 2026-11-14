@@ -75,7 +75,7 @@ public static class CsvVideoRecorder
         });
 
         var page = await context.NewPageAsync();
-        var video = page.Video;
+        var video = page.Video ?? throw new InvalidOperationException("Video recording is not available.");
         await page.AddInitScriptAsync(CursorScript);
         page.SetDefaultTimeout(15000);
         var target = string.IsNullOrWhiteSpace(row["URL"]) ? "https://duckduckgo.com/" : row["URL"].Trim();
@@ -87,7 +87,7 @@ public static class CsvVideoRecorder
         var query = "Magento developer in " + row["City"].Trim();
         await search.ClickAsync();
         await search.FillAsync(query);
-        await search.PressAsync("Enter", new LocatorPressOptions { NoWaitAfter = true });
+        await search.PressAsync("Enter");
 
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
@@ -97,7 +97,7 @@ public static class CsvVideoRecorder
         {
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 12000 });
         }
-        catch (Microsoft.Playwright.TimeoutException) { }
+        catch (TimeoutException) { }
         await page.WaitForTimeoutAsync(1800);
 
         await context.CloseAsync();
