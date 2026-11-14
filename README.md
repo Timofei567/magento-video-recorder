@@ -29,3 +29,8 @@ The sample scenario searches DuckDuckGo for `Magento developer in <City>`.
 `Language`, `Country`, `Postcode`, `Street`, and `HouseNo` are accepted as
 required function arguments as specified in the task; the requested demo query
 uses the city value.
+
+
+## Task 2 — C# implementation
+
+The second task is implemented separately in [`csharp/`](csharp/). See [`csharp/README.md`](csharp/README.md) for .NET setup, service endpoints, database details, recording, upload, and browser preview instructions. The Python Task 1 implementation is in the repository.

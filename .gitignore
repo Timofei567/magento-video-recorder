@@ -1,0 +1,20 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+
+# Runtime data
+video/*
+!video/.gitkeep
+csharp/uploads/
+csharp/videos.db*
+
+# C# runtime data
+csharp/video/*
+/FETCH_HEAD

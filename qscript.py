@@ -470,43 +470,33 @@ def CaptureVideo_Magento(
                 'form button[type="submit"]'
             ).first
 
-            if (
-                search_button.count()
-            ):
+            button_box = (
+                search_button.bounding_box()
+                if search_button.count()
+                else None
+            )
 
-                button_box = search_button.bounding_box()
-
-                if button_box:
-
-                    button_point = (
-                        button_box["x"] + button_box["width"] / 2 + 40,
-                        button_box["y"] + button_box["height"] / 2,
-                    )
-                    _smooth_move(
-                        page,
-                        mouse_position,
-                        button_point,
-                        duration=0.55,
-                    )
-
-                    mouse_position = button_point
-
-
+            if button_box:
+                button_point = (
+                    button_box["x"] + button_box["width"] / 2 + 40,
+                    button_box["y"] + button_box["height"] / 2,
+                )
+                _smooth_move(
+                    page,
+                    mouse_position,
+                    button_point,
+                    duration=0.55,
+                )
+                mouse_position = button_point
+                page.mouse.click(*button_point)
 
             try:
-                    page.mouse.click(button_box["x"] + button_box["width"] / 2 + 40, button_box["y"] + button_box["height"] / 2)
-                    search_box.press(
-                        "Enter",
-                        timeout=70,
-                        no_wait_after=True,
-                    )
-
+                search_box.press("Enter", timeout=15000)
             except PlaywrightError as enter_error:
-
-                    print(
-                        "[WARNING] Enter submission failed: "
-                        f"{enter_error}"
-                    )
+                print(
+                    "[WARNING] Enter submission failed: "
+                    f"{enter_error}"
+                )
 
 
             if _check_duckduckgo_error(page):
@@ -559,19 +549,14 @@ def CaptureVideo_Magento(
 
 
             try:
-
                 page.wait_for_load_state(
                     "domcontentloaded",
-                    timeout=12000,
+                    timeout=NAVIGATION_TIMEOUT_MS,
                 )
-
             except PlaywrightTimeoutError:
                 pass
 
-            page.wait_for_timeout(1800)
-
-
-            page.wait_for_timeout(700)
+            page.wait_for_timeout(2000)
 
 
             video = page.video
