@@ -103,16 +103,18 @@ public static class CsvVideoRecorder
         {
             var buttonBox = await searchButton.BoundingBoxAsync()
                 ?? throw new InvalidOperationException("Search button has no bounding box.");
+            // Match the Python recorder: aim slightly to the right of the button center.
             var buttonPoint = (
-                X: buttonBox.X + buttonBox.Width / 2,
+                X: buttonBox.X + buttonBox.Width / 2 + 40,
                 Y: buttonBox.Y + buttonBox.Height / 2
             );
+            Console.WriteLine("[MOUSE] Moving to the search button.");
             mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint);
             await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
         }
         else
         {
-            // Keep the flow working on search pages without a visible submit button.
+            Console.WriteLine("[WARN] Search submit button was not found; submitting with Enter.");
             await page.Keyboard.PressAsync("Enter");
         }
 
@@ -135,9 +137,16 @@ public static class CsvVideoRecorder
         catch (TimeoutException) { }
         await page.WaitForTimeoutAsync(1800);
 
-        // Reposition the overlay cursor after navigation recreates the page DOM.
-        // The real mouse stays at the same coordinates; this does not jump to (0, 0).
-        await page.Mouse.MoveAsync((float)mousePosition.X, (float)mousePosition.Y);
+        // Navigation creates a fresh DOM, so explicitly restore the visual cursor.
+        // Moving the real mouse to the same coordinates may emit no mousemove event.
+        await page.EvaluateAsync(
+            @"({ x, y }) => {
+                const cursor = document.getElementById('__capture_cursor');
+                const highlight = document.getElementById('__capture_highlight');
+                if (cursor) { cursor.style.left = x + 'px'; cursor.style.top = y + 'px'; }
+                if (highlight) { highlight.style.left = x + 'px'; highlight.style.top = y + 'px'; }
+            }",
+            new { x = mousePosition.X, y = mousePosition.Y });
 
         await context.CloseAsync();
         var recordedPath = await video.PathAsync();
