@@ -11,14 +11,14 @@ The original Python implementation is kept in the repository.
 ### Setup
 ```bash
 python -m venv .venv
-# Windows: .venv\\Scripts\\activate
+# Windows: .venv\Scripts\activate
 # macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 python -m playwright install chromium
 ```
 
 ### Run
-Put your data in `input.csv` using `;\` as delimiter and the exact header:
+Put your data in `input.csv` using a semicolon (`;`) as delimiter and the exact header:
 
 ```text
 URL;Company Name;Language;Country;Postcode;City;Street;HouseNo
