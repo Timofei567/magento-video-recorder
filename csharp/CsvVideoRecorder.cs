@@ -96,7 +96,25 @@ public static class CsvVideoRecorder
         var mousePosition = await SmoothMoveAsync(page, (X: 0d, Y: 0d), searchPoint);
         await page.Mouse.ClickAsync(searchPoint.X, searchPoint.Y);
         await page.Keyboard.TypeAsync(query, new KeyboardTypeOptions { Delay = 105 });
-        await page.Keyboard.PressAsync("Enter");
+
+        // Move from the search field to the submit button, then click it.
+        var searchButton = page.Locator("form button[type='submit']").First;
+        if (await searchButton.CountAsync() > 0 && await searchButton.IsVisibleAsync())
+        {
+            var buttonBox = await searchButton.BoundingBoxAsync()
+                ?? throw new InvalidOperationException("Search button has no bounding box.");
+            var buttonPoint = (
+                X: buttonBox.X + buttonBox.Width / 2,
+                Y: buttonBox.Y + buttonBox.Height / 2
+            );
+            mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint);
+            await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
+        }
+        else
+        {
+            // Keep the flow working on search pages without a visible submit button.
+            await page.Keyboard.PressAsync("Enter");
+        }
 
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
@@ -116,6 +134,10 @@ public static class CsvVideoRecorder
         }
         catch (TimeoutException) { }
         await page.WaitForTimeoutAsync(1800);
+
+        // Reposition the overlay cursor after navigation recreates the page DOM.
+        // The real mouse stays at the same coordinates; this does not jump to (0, 0).
+        await page.Mouse.MoveAsync((float)mousePosition.X, (float)mousePosition.Y);
 
         await context.CloseAsync();
         var recordedPath = await video.PathAsync();
