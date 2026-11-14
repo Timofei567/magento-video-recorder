@@ -86,7 +86,6 @@ public static class CsvVideoRecorder
         await search.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 20000 });
         var query = "Magento developer in " + row["City"].Trim();
 
-        // Move the real Playwright mouse gradually, matching the Python recorder.
         var searchBox = await search.BoundingBoxAsync()
             ?? throw new InvalidOperationException("Search field has no bounding box.");
         var searchPoint = (
@@ -99,9 +98,6 @@ public static class CsvVideoRecorder
         await page.Keyboard.TypeAsync(query, new KeyboardTypeOptions { Delay = 105 });
         await page.WaitForTimeoutAsync(500);
 
-        // The submit button can have zero width. Match Python: move to its
-        // visually visible click coordinate (40 px to the right), click,
-        // and then press Enter because the button itself may not submit.
         var searchButton = page.Locator("form button[type='submit']").First;
         if (await searchButton.CountAsync() > 0)
         {
@@ -126,8 +122,7 @@ public static class CsvVideoRecorder
             Console.WriteLine("[WARN] Search button element was not found; pressing Enter.");
         }
 
-        // This Enter is intentional: the visible search button is decorative/non-functional.
-        await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000, NoWaitAfter = true });
+        await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000 });
 
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
@@ -140,7 +135,6 @@ public static class CsvVideoRecorder
             X: resultBox.X + resultBox.Width / 2,
             Y: resultBox.Y + resultBox.Height / 2
         );
-        // Python intentionally starts this second movement at the top-left corner.
         mousePosition = await SmoothMoveAsync(page, (X: 0d, Y: 0d), resultPoint, durationMs: 900, steps: 36);
         await page.Mouse.ClickAsync(resultPoint.X, resultPoint.Y);
         try
@@ -150,8 +144,6 @@ public static class CsvVideoRecorder
         catch (TimeoutException) { }
         await page.WaitForTimeoutAsync(1800);
 
-        // Navigation creates a fresh DOM, so explicitly restore the visual cursor.
-        // Moving the real mouse to the same coordinates may emit no mousemove event.
         await page.EvaluateAsync(
             @"({ x, y }) => {
                 const cursor = document.getElementById('__capture_cursor');
@@ -184,7 +176,6 @@ public static class CsvVideoRecorder
         for (var index = 1; index <= steps; index++)
         {
             var t = (double)index / steps;
-            // Smoothstep easing: gradual acceleration and deceleration.
             var eased = t * t * (3 - 2 * t);
             var x = start.X + (end.X - start.X) * eased;
             var y = start.Y + (end.Y - start.Y) * eased;
