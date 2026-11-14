@@ -4,7 +4,7 @@ namespace MagentoVideoRecorder;
 
 public static class VideoService
 {
-    private static readonly string Root = AppContext.BaseDirectory;
+    private static readonly string Root = Directory.GetCurrentDirectory();
     private static readonly string UploadDirectory = Path.Combine(Root, "uploads");
     private static readonly string DatabasePath = Path.Combine(Root, "videos.db");
     private static string ConnectionString =>
