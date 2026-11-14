@@ -95,31 +95,43 @@ public static class CsvVideoRecorder
         );
         var mousePosition = await SmoothMoveAsync(page, (X: 0d, Y: 0d), searchPoint);
         await page.Mouse.ClickAsync(searchPoint.X, searchPoint.Y);
+        await page.WaitForTimeoutAsync(350);
         await page.Keyboard.TypeAsync(query, new KeyboardTypeOptions { Delay = 105 });
+        await page.WaitForTimeoutAsync(500);
 
-        // Move from the search field to the submit button, then click it.
+        // The submit button can have zero width. Match Python: move to its
+        // visually visible click coordinate (40 px to the right), click,
+        // and then press Enter because the button itself may not submit.
         var searchButton = page.Locator("form button[type='submit']").First;
-        if (await searchButton.CountAsync() > 0 && await searchButton.IsVisibleAsync())
+        if (await searchButton.CountAsync() > 0)
         {
-            var buttonBox = await searchButton.BoundingBoxAsync()
-                ?? throw new InvalidOperationException("Search button has no bounding box.");
-            // Match the Python recorder: aim slightly to the right of the button center.
-            var buttonPoint = (
-                X: buttonBox.X + buttonBox.Width / 2 + 40,
-                Y: buttonBox.Y + buttonBox.Height / 2
-            );
-            Console.WriteLine("[MOUSE] Moving to the search button.");
-            mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint);
-            await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
+            var buttonBox = await searchButton.BoundingBoxAsync();
+            if (buttonBox is not null)
+            {
+                var buttonPoint = (
+                    X: buttonBox.X + buttonBox.Width / 2 + 40,
+                    Y: buttonBox.Y + buttonBox.Height / 2
+                );
+                Console.WriteLine("[MOUSE] Moving to the visual search-button coordinates.");
+                mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint, durationMs: 550);
+                await page.Mouse.ClickAsync(buttonPoint.X, buttonPoint.Y);
+            }
+            else
+            {
+                Console.WriteLine("[WARN] Search button has no bounding box; pressing Enter.");
+            }
         }
         else
         {
-            Console.WriteLine("[WARN] Search submit button was not found; submitting with Enter.");
-            await page.Keyboard.PressAsync("Enter");
+            Console.WriteLine("[WARN] Search button element was not found; pressing Enter.");
         }
+
+        // This Enter is intentional: the visible search button is decorative/non-functional.
+        await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000, NoWaitAfter = true });
 
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
+        await page.WaitForTimeoutAsync(900);
         await firstResult.ScrollIntoViewIfNeededAsync();
 
         var resultBox = await firstResult.BoundingBoxAsync()
@@ -128,7 +140,8 @@ public static class CsvVideoRecorder
             X: resultBox.X + resultBox.Width / 2,
             Y: resultBox.Y + resultBox.Height / 2
         );
-        mousePosition = await SmoothMoveAsync(page, mousePosition, resultPoint, durationMs: 900, steps: 36);
+        // Python intentionally starts this second movement at the top-left corner.
+        mousePosition = await SmoothMoveAsync(page, (X: 0d, Y: 0d), resultPoint, durationMs: 900, steps: 36);
         await page.Mouse.ClickAsync(resultPoint.X, resultPoint.Y);
         try
         {
