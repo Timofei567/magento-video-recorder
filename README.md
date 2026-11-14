@@ -33,4 +33,4 @@ uses the city value.
 
 ## Task 2 — C# implementation
 
-The second task is implemented separately in [`csharp/`](csharp/). See [`csharp/README.md`](csharp/README.md) for .NET setup, service endpoints, database details, recording, upload, and browser preview instructions. The original Python Task 1 implementation remains in the repository.
+The second task is implemented separately in [`csharp/`](csharp/). See [`csharp/README.md`](csharp/README.md) for .NET setup, service endpoints, database details, recording, upload, and browser preview instructions. The Python Task 1 implementation is in the repository.
