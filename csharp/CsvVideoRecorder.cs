@@ -97,7 +97,7 @@ public static class CsvVideoRecorder
         {
             await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded, new PageWaitForLoadStateOptions { Timeout = 12000 });
         }
-        catch (TimeoutException) { }
+        catch (Microsoft.Playwright.TimeoutException) { }
         await page.WaitForTimeoutAsync(1800);
 
         await context.CloseAsync();
