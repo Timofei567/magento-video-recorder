@@ -9,6 +9,8 @@ The internship implementation runs two services with Docker Compose:
 - `web`: Apache + mod_wsgi + Flask, exposed at `http://localhost:8000`.
 - `db`: PostgreSQL 16.
 
+The Docker image installs only the web-service dependencies from `requirements-web.txt`. The root `requirements.txt` remains for the original Playwright recorder.
+
 PostgreSQL data and uploaded videos are stored in named Docker volumes and survive container recreation.
 
 ### Requirements
