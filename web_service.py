@@ -1,6 +1,7 @@
 """Flask video service backed by PostgreSQL."""
 import os
 import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import psycopg2
@@ -25,11 +26,22 @@ def get_db_connection():
     )
 
 
-def initialize_database(max_attempts=30, retry_delay=2):
+@contextmanager
+def database_connection():
+    """Commit or roll back a transaction and always close the connection."""
+    connection = get_db_connection()
+    try:
+        with connection:
+            yield connection
+    finally:
+        connection.close()
+
+
+def initialize_database(max_attempts=60, retry_delay=2):
     last_error = None
     for attempt in range(1, max_attempts + 1):
         try:
-            with get_db_connection() as connection:
+            with database_connection() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         CREATE TABLE IF NOT EXISTS videos (
@@ -95,7 +107,7 @@ def create_app():
             os.replace(temporary, destination)
             video_url = url_for("get_video", filename=filename, _external=True)
 
-            with get_db_connection() as connection:
+            with database_connection() as connection:
                 with connection.cursor() as cursor:
                     cursor.execute("""
                         INSERT INTO videos (company_name, file_path, video_url)
@@ -117,7 +129,7 @@ def create_app():
         company_name = (request.args.get("company_name") or "").strip()
         if not company_name:
             return jsonify(error="company_name is required."), 400
-        with get_db_connection() as connection:
+        with database_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
                     "SELECT company_name, video_url FROM videos WHERE company_name = %s LIMIT 1;",
@@ -136,7 +148,7 @@ def create_app():
 
     @app.get("/videos")
     def list_videos():
-        with get_db_connection() as connection:
+        with database_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
                     SELECT id, company_name, file_path, video_url, created_at, updated_at
