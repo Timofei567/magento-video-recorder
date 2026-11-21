@@ -9,8 +9,8 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt \
+COPY requirements-web.txt .
+RUN pip install --no-cache-dir -r requirements-web.txt \
     && mod_wsgi-express module-config > /etc/apache2/mods-available/wsgi.load \
     && a2enmod wsgi
 
