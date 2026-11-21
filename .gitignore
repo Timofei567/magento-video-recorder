@@ -14,7 +14,7 @@ video/*
 !video/.gitkeep
 csharp/uploads/
 csharp/videos.db*
-
-# C# runtime data
 csharp/video/*
-/FETCH_HEAD
+uploads/
+videos.db*
+.env
