@@ -1,6 +1,8 @@
-"""Flask video service backed by PostgreSQL."""
+""""Flask video service backed by PostgreSQL."""
+import mimetypes
 import os
 import time
+import uuid
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -90,20 +92,22 @@ def create_app():
         if video_file is None or not video_file.filename:
             return jsonify(error="A file field is required."), 400
 
-        extension = Path(video_file.filename).suffix.lower() or ".webm"
+        extension = Path(video_file.filename).suffix.lower()
         if extension not in ALLOWED_EXTENSIONS:
             return jsonify(error="Unsupported video file extension."), 400
 
-        safe_company = secure_filename(company_name)[:100] or "recording"
-        filename = f"{safe_company}{extension}"
+        safe_company = secure_filename(company_name)[:80] or "recording"
+        filename = f"{safe_company}-{uuid.uuid4().hex}{extension}"
         destination = UPLOAD_DIR / filename
         temporary = UPLOAD_DIR / f".{filename}.uploading"
+        database_saved = False
 
         try:
             video_file.save(temporary)
             if not temporary.is_file() or temporary.stat().st_size == 0:
-                temporary.unlink(missing_ok=True)
                 return jsonify(error="Uploaded file is empty."), 400
+
+            # The unique destination prevents collisions with other companies/files.
             os.replace(temporary, destination)
             video_url = url_for("get_video", filename=filename, _external=True)
 
@@ -117,12 +121,17 @@ def create_app():
                             video_url = EXCLUDED.video_url,
                             updated_at = NOW();
                     """, (company_name, str(destination), video_url))
+            database_saved = True
 
             return jsonify(company_name=company_name, video_url=video_url), 200
         except Exception:
-            temporary.unlink(missing_ok=True)
             app.logger.exception("Video upload failed for %s", company_name)
             return jsonify(error="Video upload failed."), 500
+        finally:
+            temporary.unlink(missing_ok=True)
+            # If metadata persistence failed, don't leave an unreferenced new file.
+            if not database_saved:
+                destination.unlink(missing_ok=True)
 
     @app.get("/get_video_url")
     def get_video_url():
@@ -142,8 +151,9 @@ def create_app():
 
     @app.get("/media/<path:filename>")
     def get_video(filename):
+        media_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
         return send_from_directory(
-            UPLOAD_DIR, filename, mimetype="video/webm", conditional=True
+            UPLOAD_DIR, filename, mimetype=media_type, conditional=True
         )
 
     @app.get("/videos")
@@ -165,3 +175,4 @@ def create_app():
 
 app = create_app()
 initialize_database()
+"
