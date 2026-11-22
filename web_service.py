@@ -1,4 +1,4 @@
-""""Flask video service backed by PostgreSQL."""
+"""Flask video service backed by PostgreSQL."""
 import mimetypes
 import os
 import time
@@ -175,4 +175,3 @@ def create_app():
 
 app = create_app()
 initialize_database()
-"
