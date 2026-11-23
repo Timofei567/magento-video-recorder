@@ -99,7 +99,7 @@ public static class CsvVideoRecorder
             if (buttonBox is not null)
             {
                 var buttonPoint = (
-                    X: buttonBox.X + buttonBox.Width / 2 + 40,
+                    X: buttonBox.X + buttonBox.Width / 2,
                     Y: buttonBox.Y + buttonBox.Height / 2
                 );
                 mousePosition = await SmoothMoveAsync(page, mousePosition, buttonPoint, durationMs: 550);
@@ -107,8 +107,8 @@ public static class CsvVideoRecorder
             }
         }
 
-        await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000 });
-
+        //await search.PressAsync("Enter", new LocatorPressOptions { Timeout = 15000 });
+        
         var firstResult = page.Locator("a[data-testid='result-title-a']").First;
         await firstResult.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible, Timeout = 45000 });
         await page.WaitForTimeoutAsync(900);
